@@ -41,10 +41,8 @@ sub call {
             return unless $match;
         }
 
-        if (Plack::Util::status_with_no_entity_body($res->[0]) or
-            grep /\bno-transform\b/, $h->get('Cache-Control') ) {
-            return;
-        }
+        return if Plack::Util::status_with_no_entity_body($res->[0])
+            or grep /\bno-transform\b/, $h->get('Cache-Control');
 
         my @vary = map +( split /\s*,\s*/, $_ ), $h->get('Vary');
         push @vary, 'Accept-Encoding';
@@ -56,9 +54,8 @@ sub call {
 
         # Some browsers might have problems with content types
         # other than text/html, so set compress-only-text/html
-        if ( $env->{"psgix.compress-only-text/html"} ) {
-            return if $content_type ne 'text/html';
-        }
+        return if $env->{"psgix.compress-only-text/html"}
+            and $content_type ne 'text/html';
 
         return if not defined $env->{HTTP_ACCEPT_ENCODING};
 
